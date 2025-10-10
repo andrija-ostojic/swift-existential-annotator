@@ -1,7 +1,7 @@
 import ArgumentParser
 import Foundation
 import SwiftSyntax
-import SwiftSyntaxParser
+import SwiftParser
 
 @main
 struct RootDirectory: ParsableCommand {
@@ -15,6 +15,13 @@ struct RootDirectory: ParsableCommand {
     })
     var rootDirectory: URL
 
+    @Option(
+        name: .shortAndLong,
+        parsing: .upToNextOption,
+        help: "Additional protocols that existentialannotator isn't able to find by itself because they might be defined in some closed source dependency"
+    )
+    var additionalProtocols: Array<String> = Array()
+
     private var commonlyUsedSystemProtocols: Set<String> {
         [
             "Codable",
@@ -22,12 +29,18 @@ struct RootDirectory: ParsableCommand {
             "Decodable",
             "NSFetchRequestResult",
             "NSCoding",
+            "Error",
+            "Decoder",
+            "Encoder"
         ]
     }
 
     func run() throws {
         let processor = Processor()
 
-        try processor.processFiles(startingAt: rootDirectory, inaccessibleProtocolDeclarations: commonlyUsedSystemProtocols)
+        try processor.processFiles(
+            startingAt: rootDirectory,
+            inaccessibleProtocolDeclarations: commonlyUsedSystemProtocols.union(additionalProtocols)
+        )
     }
 }
