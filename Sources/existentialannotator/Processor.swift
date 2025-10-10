@@ -1,6 +1,6 @@
 import Foundation
 import SwiftSyntax
-import SwiftSyntaxParser
+import SwiftParser
 
 final class Processor {
     private let provider: any FileProvider
@@ -23,7 +23,9 @@ final class Processor {
         for fileURL in swiftFilesURLs {
             do {
                 print("Parsing", fileURL.lastPathComponent)
-                let parsedFile = try SyntaxParser.parse(fileURL)
+                let data = try Data(contentsOf: fileURL)
+                guard let contents = String(data: data, encoding: .utf8) else { continue }
+                let parsedFile = Parser.parse(source: contents)
                 parsedFiles[fileURL] = parsedFile
                 print("Looking for declared protocols in", fileURL)
                 finder.walk(parsedFile)

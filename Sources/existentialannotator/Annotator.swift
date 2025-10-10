@@ -9,171 +9,185 @@ final class Annotator: SyntaxRewriter {
         self.protocols = protocols
     }
 
+    // This method is implemented in order to avoid adding `any` token when there is one already.
+    // If a node already has `any` annotation, we just return it and don't go any deeper
+    override func visit(_ node: SomeOrAnyTypeSyntax) -> TypeSyntax {
+        TypeSyntax(node)
+    }
+
+    override func visit(_ node: ReturnClauseSyntax) -> ReturnClauseSyntax {
+        var modifiedNode = node
+        modifiedNode.type = addAnyKeywordTo(type: node.type)
+        return modifiedNode
+    }
+
+    override func visit(_ node: TypeAnnotationSyntax) -> TypeAnnotationSyntax {
+        var modifiedNode = node
+        modifiedNode.type = addAnyKeywordTo(type: node.type)
+        return modifiedNode
+    }
+
+    override func visit(_ node: ExprListSyntax) -> ExprListSyntax {
+        var modifiedNode = node
+        node.enumerated().forEach {
+            if let exprType = $0.element.as(TypeExprSyntax.self) {
+                var newExprType = exprType
+                newExprType.type = addAnyKeywordTo(type: exprType.type)
+                if let newType = ExprSyntax(newExprType) {
+                    modifiedNode = modifiedNode.replacing(childAt: $0.offset, with: newType)
+                }
+            }
+        }
+        return modifiedNode
+    }
+
+    override func visit(_ node: ArrayTypeSyntax) -> TypeSyntax {
+        var modifiedNode = node
+        let arrayElement = node.element.description.trimmingCharacters(in: .whitespaces)
+
+        if let _ = node.element.as(IdentifierTypeSyntax.self), protocols.contains(arrayElement) {
+            modifiedNode.unexpectedBetweenLeftSquareAndElement = anyToken
+            return TypeSyntax(modifiedNode) ?? super.visit(node)
+        } else {
+            modifiedNode.element = visit(node.element)
+            return TypeSyntax(modifiedNode) ?? super.visit(node)
+        }
+    }
+
+    override func visit(_ node: OptionalTypeSyntax) -> TypeSyntax {
+        var modifiedNode = node
+        let wrappedType = node.wrappedType.description.trimmingCharacters(in: .whitespaces)
+
+        if let _ = node.wrappedType.as(IdentifierTypeSyntax.self), protocols.contains(wrappedType) {
+            modifiedNode.unexpectedBeforeWrappedType = openingParenAndAnyToken
+            modifiedNode.unexpectedBetweenWrappedTypeAndQuestionMark = closingParenToken
+            return TypeSyntax(modifiedNode) ?? super.visit(node)
+        } else {
+            modifiedNode.wrappedType = visit(node.wrappedType)
+            return TypeSyntax(modifiedNode) ?? super.visit(node)
+        }
+    }
+
+    override func visit(_ node: ImplicitlyUnwrappedOptionalTypeSyntax) -> TypeSyntax {
+        var modifiedNode = node
+        let wrappedType = node.wrappedType.description.trimmingCharacters(in: .whitespaces)
+
+        if let _ = node.wrappedType.as(IdentifierTypeSyntax.self), protocols.contains(wrappedType) {
+            modifiedNode.unexpectedBeforeWrappedType = openingParenAndAnyToken
+            modifiedNode.unexpectedBetweenWrappedTypeAndExclamationMark = closingParenToken
+            return TypeSyntax(modifiedNode) ?? super.visit(node)
+        } else {
+            modifiedNode.wrappedType = visit(node.wrappedType)
+            return TypeSyntax(modifiedNode) ?? super.visit(node)
+        }
+    }
+
+    override func visit(_ node: FunctionParameterClauseSyntax) -> FunctionParameterClauseSyntax {
+        var modifiedNode = node
+
+        let parameters = node.parameters.map { parameter in
+            var modifiedParam = parameter
+            modifiedParam.type = addAnyKeywordTo(type: parameter.type)
+            return modifiedParam
+        }
+        let modifiedParameterList = FunctionParameterListSyntax(parameters)
+
+        modifiedNode.parameters = modifiedParameterList
+        return modifiedNode
+    }
+
+    override func visit(_ node: GenericArgumentSyntax) -> GenericArgumentSyntax {
+        guard protocols.contains(node.argument.description.trimmingCharacters(in: .whitespaces)) else { return super.visit(node) }
+        var modifiedNode = node
+
+        if case let .type(typeSyntax) = node.argument, let type = IdentifierTypeSyntax(typeSyntax) {
+            var modifiedNestedType = type
+            modifiedNestedType.unexpectedBeforeName = anyToken
+            modifiedNode.argument = .type(TypeSyntax(modifiedNestedType))
+            return modifiedNode
+        } else {
+            return super.visit(node)
+        }
+    }
+}
+
+// MARK: - Annotation helpers
+
+private extension Annotator {
+
+    func visitAndAnnotateWithAny(_ node: CompositionTypeSyntax) -> TypeSyntax {
+        var theyAreAllProtocolsInThere = true
+        for child in node.elements {
+            let desc = child.type.description.trimmingCharacters(in: .whitespaces)
+            if !protocols.contains(desc) {
+                theyAreAllProtocolsInThere = false
+            }
+        }
+        if theyAreAllProtocolsInThere {
+            var newNode = node
+            newNode.unexpectedBeforeElements = anyToken
+            return TypeSyntax(newNode) ?? super.visit(node)
+        } else {
+            return super.visit(node)
+        }
+    }
+
+    func visitAndAnnotateWithAny(_ node: MemberTypeSyntax) -> TypeSyntax {
+        // This method gets called for nested types and we want to avoid false positives in those cases. But there is no way to
+        // know if `baseType` is a module or just a type so it's safer to constraint this to only work with "Swift" and avoid false positives
+        guard node.baseType.description == "Swift" else { return super.visit(node)}
+        guard protocols.contains(node.name.description.trimmingCharacters(in: .whitespaces)) else { return super.visit(node) }
+
+        var modifiedNode = node
+        modifiedNode.unexpectedBeforeBaseType = anyToken
+        return TypeSyntax(modifiedNode) ?? super.visit(node)
+    }
+
+    func addAnyKeywordTo(type: TypeSyntax) -> TypeSyntax {
+        if let compositionType = type.as(CompositionTypeSyntax.self) {
+            return visitAndAnnotateWithAny(compositionType)
+        } else if let memberType = type.as(MemberTypeSyntax.self) {
+            return visitAndAnnotateWithAny(memberType)
+        } else if let simpleType = type.as(IdentifierTypeSyntax.self) {
+            if let argumentClause = simpleType.genericArgumentClause {
+                var modifiedType = simpleType
+                modifiedType.genericArgumentClause = visit(argumentClause)
+                return TypeSyntax(modifiedType) ?? type
+            } else {
+                guard protocols.contains(type.description.trimmingCharacters(in: .whitespaces)) else { return type }
+                var modifiedType = simpleType
+                modifiedType.unexpectedBeforeName = anyToken
+                return TypeSyntax(modifiedType) ?? type
+            }
+        }
+        return visit(type)
+    }
+}
+
+// MARK: - Helper tokens
+
+private extension Annotator {
+
     @UnexpectedNodesBuilder
     private var anyToken: UnexpectedNodesSyntax {
         TokenSyntax(.unknown("any"), trailingTrivia: [.spaces(1)], presence: .present)
     }
 
-    override func visit(_ node: VariableDeclSyntax) -> DeclSyntax {
-        let rawTokens = node.tokens(viewMode: .sourceAccurate)
-        let tokens = Set(rawTokens.map { $0.description.trimmingCharacters(in: .whitespaces) })
-        guard let type = tokens.first(where: { protocols.contains($0) }) else {
-            return DeclSyntax(node)
-        }
-
-        if node.description.contains("as \(type)") {
-            return addAnyToCastedExistential(type: type, node: node)
-        }
-
-        let typeWithAnyKeyword = withExistentialAny(type)
-        let optionalTypeAttributes = isOptional(tokens: rawTokens)
-        let isOptional = optionalTypeAttributes.isOptional
-        let optionalNotation = optionalTypeAttributes.optionalNotation
-
-        var variableDeclarationString: String {
-            let colonToken = TokenSyntax(.colon, trailingTrivia: [.spaces(1)], presence: .present).description
-            if isOptional {
-                return node.description.replacingOccurrences(of: "\(colonToken)\(type)\(optionalNotation)", with: "\(colonToken)(\(typeWithAnyKeyword))\(optionalNotation)")
-            } else if node.typeUsedInArraySyntax(type) {
-                return node.description.replacingOccurrences(of: "[\(type)]", with: "[\(withExistentialAny(type))]")
-            }
-            return node.description.replacingOccurrences(of: "\(colonToken)\(type)", with: "\(colonToken)\(typeWithAnyKeyword)")
-        }
-        return DeclSyntax(stringLiteral: variableDeclarationString)
+    @UnexpectedNodesBuilder
+    private var openingParenToken: UnexpectedNodesSyntax {
+        TokenSyntax(.leftParen, presence: .present)
     }
 
-    private func addAnyToCastedExistential(type: String, node: VariableDeclSyntax) -> DeclSyntax {
-        let rawString = node.description
-            .replacingOccurrences(of: " \(type)", with: " \(withExistentialAny(type))")
-        return DeclSyntax(stringLiteral: rawString)
+    @UnexpectedNodesBuilder
+    private var closingParenToken: UnexpectedNodesSyntax {
+        TokenSyntax(.rightParen, presence: .present)
     }
 
-    override func visit(_ node: ParameterClauseSyntax) -> ParameterClauseSyntax {
-        let parameters = node.parameterList.map { parameter in
-            guard let type = parameter.type else {
-                return parameter
-            }
-            let typeAsString = type.rawStringRepresentation
-
-            if let modifiedGenericClause = addAnyToGenericTypeArgument(type.as(SimpleTypeIdentifierSyntax.self)) {
-                let typeWithModifiedGenerics = SimpleTypeIdentifierSyntax(type)?.withGenericArgumentClause(modifiedGenericClause)
-                return parameter.withType(TypeSyntax(typeWithModifiedGenerics))
-            }
-
-            guard protocols.contains(typeAsString) else {
-                return parameter
-            }
-
-            let optionalAttributes = isOptional(tokens: parameter.tokens(viewMode: .sourceAccurate))
-            if optionalAttributes.isOptional {
-                let modifiedType = withExistentialAny(type)
-                    .withLeadingTrivia([.unexpectedText("(")])
-                    .withTrailingTrivia([.unexpectedText(")\(optionalAttributes.optionalNotation)")])
-
-                return parameter.withType(modifiedType)
-            }
-            return parameter.withUnexpectedBetweenColonAndType(anyToken)
-        }
-
-        let modifiedParameterList = FunctionParameterListSyntax(parameters)
-        let nodeWithModifiedParameterList = node.withParameterList(modifiedParameterList)
-        return nodeWithModifiedParameterList
-    }
-
-    private func addAnyToGenericTypeArgument(_ type: SimpleTypeIdentifierSyntax?) -> GenericArgumentClauseSyntax? {
-        guard let genericClause = type?.genericArgumentClause else {
-            return nil
-        }
-        let arguments = genericClause.arguments.map { argument in
-            let type = argument.argumentType
-            let typeString = type.rawStringRepresentation
-            guard protocols.contains(typeString) else {
-                return argument
-            }
-            let typeWithAnyKeyword = withExistentialAny(type)
-            return argument.withArgumentType(typeWithAnyKeyword)
-        }
-        let modifiedArguments = GenericArgumentListSyntax(arguments)
-        let modifiedGenericClause = genericClause.withArguments(modifiedArguments)
-        return modifiedGenericClause
-    }
-
-    override func visit(_ node: FunctionCallExprSyntax) -> ExprSyntax {
-        let arguments = node.argumentList.map { argument in
-            let tokens = argument.tokens(viewMode: .sourceAccurate)
-            guard let type = tokens.first(where: { token in
-                let token = token.description.trimmingCharacters(in: .whitespaces)
-                return protocols.contains(token)
-            })?.description else { return argument }
-            if tokens.contains(where: { $0.tokenKind == .asKeyword }) {
-                let expression = argument.expression.description.replacingOccurrences(of: type, with: withExistentialAny(type))
-                let modifiedArgument = argument.withExpression(ExprSyntax(stringLiteral: expression))
-                return modifiedArgument
-            }
-            return argument
-        }
-        let modifiedArguments = TupleExprElementList(arguments)
-        let modifiedNode = node.withArgumentList(modifiedArguments)
-        return ExprSyntax(modifiedNode)
-    }
-
-    override func visit(_ node: ReturnClauseSyntax) -> ReturnClauseSyntax {
-        if let compositionSyntax = node.returnType.as(CompositionTypeSyntax.self) {
-            let modifiedReturnType = TypeSyntax(compositionSyntax.withUnexpectedBeforeElements(anyToken))
-            return node.withReturnType(modifiedReturnType)
-        }
-        guard protocols.contains(node.returnType.rawStringRepresentation) else {
-            return node
-        }
-        let currentTypeWithoutAnyKeyword = node.returnType
-
-        var typeWithAnyKeyword: TypeSyntax {
-            if let lastToken = currentTypeWithoutAnyKeyword.lastToken, lastToken.isOptionalNotation {
-                let typeString = "(\(withExistentialAny(currentTypeWithoutAnyKeyword.rawStringRepresentation)))\(lastToken.description)"
-                return TypeSyntax(stringLiteral: typeString)
-            }
-            return withExistentialAny(currentTypeWithoutAnyKeyword)
-                .withTrailingTrivia([.spaces(1)])
-        }
-
-        let modifiedNode = node.withReturnType(typeWithAnyKeyword)
-        return modifiedNode
-    }
-
-    private func isOptional(tokens: TokenSequence) -> (isOptional: Bool, optionalNotation: String) {
-        let token = tokens.first(where: { $0.isOptionalNotation })
-        let notation = token?.description ?? ""
-        let isOptional = !notation.isEmpty
-        return (isOptional: isOptional, optionalNotation: notation)
-    }
-
-    private func withExistentialAny(_ type: TypeSyntax) -> TypeSyntax {
-        let typeWithAny = TypeSyntax(stringLiteral: withExistentialAny(type.rawStringRepresentation))
-        return typeWithAny
-    }
-
-    private func withExistentialAny(_ type: String) -> String {
-        "any \(type)"
-    }
-}
-
-private extension TypeSyntax {
-    var rawStringRepresentation: String {
-        let string = description.trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: "?", with: "")
-            .replacingOccurrences(of: "!", with: "")
-        return string
-    }
-}
-
-extension VariableDeclSyntax {
-    func typeUsedInArraySyntax(_ type: String) -> Bool {
-        return description.contains("[\(type)]")
-    }
-}
-
-private extension TokenSyntax {
-    var isOptionalNotation: Bool {
-        tokenKind == .postfixQuestionMark || tokenKind == .exclamationMark
+    @UnexpectedNodesBuilder
+    private var openingParenAndAnyToken: UnexpectedNodesSyntax {
+        UnexpectedNodesSyntax([
+            openingParenToken,
+            anyToken
+        ])
     }
 }
