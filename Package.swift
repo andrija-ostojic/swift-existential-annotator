@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "existentialannotator",
-    platforms: [.macOS(.v12)],
+    platforms: [.macOS(.v13)],
     products: [
         .executable(
             name: "existentialannotator",
@@ -13,15 +13,15 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-syntax", exact: "508.0.1"),
-        .package(url: "https://github.com/apple/swift-argument-parser", exact: "1.2.2"),
+        .package(url: "https://github.com/apple/swift-syntax", exact: "602.0.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", exact: "1.6.1"),
     ],
     targets: [
         .executableTarget(
             name: "existentialannotator",
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
-                .product(name: "SwiftSyntaxParser", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
