@@ -1,5 +1,5 @@
 @testable import existentialannotator
-import SwiftSyntaxParser
+import SwiftParser
 import XCTest
 
 final class ExistentialAnnotatorTests: XCTestCase {
@@ -15,7 +15,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["ArticleRepository"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -47,7 +47,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["ArticleRepository", "FeatureFlagsProvider"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -81,7 +81,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: [])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -116,7 +116,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["SurveyUseCase"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -149,7 +149,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["SurveyUseCase"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -180,7 +180,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["SurveyUseCase", "SurveyDelegate"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -212,7 +212,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["SurveyUseCase", "SurveyDelegate"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -243,7 +243,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["SurveyUseCase", "SurveyDelegate"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -273,7 +273,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["SurveyUseCase", "SurveyDelegate"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -307,7 +307,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["NSCoding"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -341,7 +341,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["Survey"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -370,7 +370,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["FastChat"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -400,7 +400,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["NSCoding"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -426,7 +426,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["NSFetchRequestResult"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -446,7 +446,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         }
         """#
         let sut = Annotator(protocols: ["NSFetchRequestResult", "NSFetchRequestResults"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -472,7 +472,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["OnDataModified", "NavigatorProtocol"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -498,12 +498,306 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["Codable"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
         let expected = #"""
         func doSomething() -> any Codable {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsReturnTypeWithModuleName() throws {
+        let exampleFile = #"""
+        func doSomething() -> Swift.Codable {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething() -> any Swift.Codable {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsFunctionArgumentWithModuleName() throws {
+        let exampleFile = #"""
+        func doSomething(_ error: Swift.Error) {
+            let e = error as Swift.Error
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Error"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething(_ error: any Swift.Error) {
+            let e = error as any Swift.Error
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsFunctionReturnTypeInsideAnArray() throws {
+        let exampleFile = #"""
+        func doSomething() -> [Codable] {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething() -> [any Codable] {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedInsideGenericTypeDeclarationAndWrappedInArray() throws {
+        let exampleFile = #"""
+        struct Gen<T> {}
+        
+        let gen: Gen<[Codable]>
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct Gen<T> {}
+        
+        let gen: Gen<[any Codable]>
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedInsideGenericTypeDeclarationAndWrappedInOptionalArray() throws {
+        let exampleFile = #"""
+        struct Gen<T> {}
+        
+        var items: Gen<[Codable]?> {}
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct Gen<T> {}
+        
+        var items: Gen<[any Codable]?> {}
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedInOptionalFunctionParameterOfSomeGenericTypeWrappedInArray() throws {
+        let exampleFile = #"""
+        struct Gen<T> {}
+        
+        func doSomething(param: Gen<[Codable]>?) {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct Gen<T> {}
+        
+        func doSomething(param: Gen<[any Codable]>?) {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsNotAnnotatedAgain() throws {
+        let exampleFile = #"""
+        struct Gen<T> {}
+        
+        func doSomething() -> Gen<[any Codable]> {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct Gen<T> {}
+        
+        func doSomething() -> Gen<[any Codable]> {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsMethodParameterInArrayType() throws {
+        let exampleFile = #"""
+        func doSomething(_ param: [Codable]) -> String {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething(_ param: [any Codable]) -> String {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsMethodParameterInOptionalArrayType() throws {
+        let exampleFile = #"""
+        func doSomething(_ param: [Codable?]) -> String {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething(_ param: [(any Codable)?]) -> String {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedIfUsedInTypeCompositionAsMethodParameter() throws {
+        let exampleFile = #"""
+        typealias MyType = ArticleRepository & ArticleProviding
+        
+        final class SimpleUseCase {
+          private let repository: MyType
+          private var article: Article!
+
+          init(repository: ArticleRepository & ArticleProviding) {
+            self.repository = repository
+          }
+        }
+        """#
+        let sut = Annotator(protocols: ["ArticleRepository", "ArticleProviding", "MyType"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        typealias MyType = ArticleRepository & ArticleProviding
+
+        final class SimpleUseCase {
+          private let repository: any MyType
+          private var article: Article!
+
+          init(repository: any ArticleRepository & ArticleProviding) {
+            self.repository = repository
+          }
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsMethodParameterInWholeOptionalArrayType() throws {
+        let exampleFile = #"""
+        func doSomething(_ param: [Codable]?) -> String {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething(_ param: [any Codable]?) -> String {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsMethodParameterInUnwrappedOptionalArrayType() throws {
+        let exampleFile = #"""
+        func doSomething(_ param: [Codable!]) -> String {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething(_ param: [(any Codable)!]) -> String {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsAnnotatedWhenUsedAsMethodParameterInInoutArrayType() throws {
+        let exampleFile = #"""
+        func doSomething(_ param: inout [Codable]) -> String {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething(_ param: inout [any Codable]) -> String {
             return ""
         }
         """#
@@ -519,7 +813,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["NSCoding"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -540,7 +834,7 @@ final class ExistentialAnnotatorTests: XCTestCase {
         """#
 
         let sut = Annotator(protocols: ["Decodable"])
-        let parsedSource = try SyntaxParser.parse(source: exampleFile)
+        let parsedSource = Parser.parse(source: exampleFile)
 
         let annotated = sut.visit(parsedSource)
 
@@ -548,6 +842,180 @@ final class ExistentialAnnotatorTests: XCTestCase {
         struct MyType {
             let responses: [any Decodable]
         }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsNotAnnotatedAgainIfUsedAsFunctionReturnType() throws {
+        let exampleFile = #"""
+        func doSomething() -> any Codable {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething() -> any Codable {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsNotAnnotatedAgainIfUsedAsFunctionReturnTypeWithModuleName() throws {
+        let exampleFile = #"""
+        func doSomething() -> any Swift.Codable {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething() -> any Swift.Codable {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsNotAnnotatedAgainIfUsedAsFunctionParameterWithModuleName() throws {
+        let exampleFile = #"""
+        func doSomething(_ error: any Swift.Error) {
+            let e = error as any Swift.Error
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Error"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething(_ error: any Swift.Error) {
+            let e = error as any Swift.Error
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsNotAnnotatedAgainWhenUsedAsReturnTypeInsideAnArray() throws {
+        let exampleFile = #"""
+        func doSomething() -> [any Codable] {
+            return ""
+        }
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        func doSomething() -> [any Codable] {
+            return ""
+        }
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsNotAnnotatedAgainWhenUsedInGeneriClauseInsideAnArray() throws {
+        let exampleFile = #"""
+        struct Gen<T> {}
+        
+        let gen: Gen<[any Codable]>
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct Gen<T> {}
+        
+        let gen: Gen<[any Codable]>
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatExistentialIsNotAnnotatedAgainWhenUsedInGeneriClauseInsideAnOptionalArray() throws {
+        let exampleFile = #"""
+        struct Gen<T> {}
+        
+        var items: Gen<[any Codable]?> {}
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct Gen<T> {}
+        
+        var items: Gen<[any Codable]?> {}
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatProtocolsNotTreatedAsExistentialWhenUsedAsTypeConstraint() throws {
+        let exampleFile = #"""
+        struct MyType: Swift.Codable {}        
+        """#
+
+        let sut = Annotator(protocols: ["Codable"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct MyType: Swift.Codable {}        
+        """#
+
+        XCTAssertEqual(annotated.description, expected)
+    }
+
+    func testThatNestedTypesWithSameNameAsProtocolAreNotAnnotated() throws {
+        let exampleFile = #"""
+        struct MyType {
+            enum Error {
+                case basic
+                case network
+            }
+        }        
+        
+        let error: MyType.Error
+        """#
+
+        let sut = Annotator(protocols: ["Error"])
+        let parsedSource = Parser.parse(source: exampleFile)
+
+        let annotated = sut.visit(parsedSource)
+
+        let expected = #"""
+        struct MyType {
+            enum Error {
+                case basic
+                case network
+            }
+        }        
+        
+        let error: MyType.Error
         """#
 
         XCTAssertEqual(annotated.description, expected)
