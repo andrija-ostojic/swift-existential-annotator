@@ -24,7 +24,7 @@ final class Processor {
             do {
                 print("Parsing", fileURL.lastPathComponent)
                 let data = try Data(contentsOf: fileURL)
-                guard let contents = String(data: data, encoding: .utf8) else { continue }
+                let contents = String(decoding: data, as: UTF8.self)
                 let parsedFile = Parser.parse(source: contents)
                 parsedFiles[fileURL] = parsedFile
                 print("Looking for declared protocols in", fileURL)
